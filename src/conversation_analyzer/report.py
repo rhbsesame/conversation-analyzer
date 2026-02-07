@@ -10,20 +10,22 @@ from .stats import ConversationStats
 
 def generate_report(stats: ConversationStats, output_path: str | Path) -> None:
     """Generate a self-contained HTML report with charts and stats."""
-    chart_figs = [
-        charts.build_timeline(stats),
-        charts.build_talk_time_pie(stats),
-        charts.build_turn_duration_histogram(stats),
-        charts.build_cumulative_talk_time(stats),
-        charts.build_response_time_histogram(stats),
-        charts.build_yielding_latency_histogram(stats),
+    # Each entry is (figure, optional data table HTML)
+    chart_entries = [
+        (charts.build_timeline(stats), None),
+        (charts.build_talk_time_pie(stats), None),
+        (charts.build_turn_duration_histogram(stats), _build_turn_duration_table(stats)),
+        (charts.build_cumulative_talk_time(stats), None),
+        (charts.build_response_time_histogram(stats), _build_response_time_table(stats)),
+        (charts.build_yielding_latency_histogram(stats), _build_yielding_latency_table(stats)),
     ]
 
     # Build chart HTML divs
     chart_divs = []
-    for i, fig in enumerate(chart_figs):
+    for i, (fig, data_table) in enumerate(chart_entries):
         div = pio.to_html(fig, full_html=False, include_plotlyjs=(i == 0))
-        chart_divs.append(f'<div class="chart">{div}</div>')
+        extra = data_table or ""
+        chart_divs.append(f'<div class="chart">{div}{extra}</div>')
 
     charts_html = "\n".join(chart_divs)
     stats_html = _build_stats_table(stats)
@@ -52,6 +54,13 @@ def generate_report(stats: ConversationStats, output_path: str | Path) -> None:
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
   .speaker-a {{ color: #3b82f6; font-weight: 600; }}
   .speaker-b {{ color: #f97316; font-weight: 600; }}
+  details {{ margin-top: 0.5rem; }}
+  summary {{ cursor: pointer; color: #64748b; font-size: 0.85rem; padding: 0.4rem 0;
+             user-select: none; }}
+  summary:hover {{ color: #334155; }}
+  .data-table {{ max-height: 400px; overflow-y: auto; margin-top: 0.5rem; }}
+  .data-table table {{ font-size: 0.85rem; margin-bottom: 0; }}
+  .data-table td, .data-table th {{ padding: 0.35rem 0.75rem; }}
 </style>
 </head>
 <body>
@@ -127,3 +136,77 @@ def _build_stats_table(stats: ConversationStats) -> str:
 {pause_row}
 </tbody>
 </table>"""
+
+
+def _build_turn_duration_table(stats: ConversationStats) -> str:
+    """Expandable table of all turn durations."""
+    rows = []
+    for turn in stats.turns:
+        rows.append(
+            f"<tr><td>{turn.speaker}</td>"
+            f"<td>{turn.start:.2f}s</td>"
+            f"<td>{turn.end:.2f}s</td>"
+            f"<td>{turn.duration:.2f}s</td></tr>"
+        )
+    if not rows:
+        return ""
+    return (
+        f'<details><summary>View all turns ({len(rows)})</summary>'
+        f'<div class="data-table"><table>'
+        f"<thead><tr><th>Speaker</th><th>Start</th><th>End</th><th>Duration</th></tr></thead>"
+        f'<tbody>{"".join(rows)}</tbody></table></div></details>'
+    )
+
+
+def _build_response_time_table(stats: ConversationStats) -> str:
+    """Expandable table of all response times."""
+    sa = stats.speaker_a
+    sb = stats.speaker_b
+    # Rebuild per-transition data from turns
+    entries: list[tuple[float, str, str, float]] = []
+    for i in range(1, len(stats.turns)):
+        prev = stats.turns[i - 1]
+        curr = stats.turns[i]
+        if prev.speaker == curr.speaker:
+            continue
+        gap = curr.start - prev.end
+        if gap < 0:
+            continue
+        entries.append((prev.end, prev.speaker, curr.speaker, gap))
+
+    if not entries:
+        return ""
+    rows = []
+    for time, prev_spk, resp_spk, gap in entries:
+        rows.append(
+            f"<tr><td>{time:.2f}s</td>"
+            f"<td>{prev_spk}</td>"
+            f"<td>{resp_spk}</td>"
+            f"<td>{gap:.3f}s</td></tr>"
+        )
+    return (
+        f'<details><summary>View all response times ({len(rows)})</summary>'
+        f'<div class="data-table"><table>'
+        f"<thead><tr><th>At</th><th>From</th><th>Responder</th><th>Latency</th></tr></thead>"
+        f'<tbody>{"".join(rows)}</tbody></table></div></details>'
+    )
+
+
+def _build_yielding_latency_table(stats: ConversationStats) -> str:
+    """Expandable table of all interruption yielding latencies."""
+    if not stats.interruptions:
+        return ""
+    rows = []
+    for intr in stats.interruptions:
+        rows.append(
+            f"<tr><td>{intr.start_time:.2f}s</td>"
+            f"<td>{intr.interrupter}</td>"
+            f"<td>{intr.interrupted}</td>"
+            f"<td>{intr.yielding_latency:.3f}s</td></tr>"
+        )
+    return (
+        f'<details><summary>View all interruptions ({len(rows)})</summary>'
+        f'<div class="data-table"><table>'
+        f"<thead><tr><th>At</th><th>Interrupter</th><th>Interrupted</th><th>Yielding Latency</th></tr></thead>"
+        f'<tbody>{"".join(rows)}</tbody></table></div></details>'
+    )

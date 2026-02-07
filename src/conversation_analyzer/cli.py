@@ -16,9 +16,9 @@ from .vad import detect_speech
               help="Output HTML report path (default: <input>_report.html)")
 @click.option("-t", "--threshold", type=float, default=None,
               help="RMS energy threshold (default: auto-detect)")
-@click.option("-a", "--speaker-a", default="Speaker A",
+@click.option("-a", "--speaker-a", default="Human",
               help="Label for left channel")
-@click.option("-b", "--speaker-b", default="Speaker B",
+@click.option("-b", "--speaker-b", default="Maya",
               help="Label for right channel")
 @click.option("--frame-size", type=int, default=30,
               help="VAD frame size in ms")

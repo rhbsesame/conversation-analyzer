@@ -72,12 +72,14 @@ def build_turn_duration_histogram(stats: ConversationStats) -> go.Figure:
         name=stats.speaker_a.label,
         marker_color=COLOR_A,
         opacity=0.7,
+        xbins=dict(size=0.25),
     ))
     fig.add_trace(go.Histogram(
         x=stats.speaker_b.turn_durations,
         name=stats.speaker_b.label,
         marker_color=COLOR_B,
         opacity=0.7,
+        xbins=dict(size=0.25),
     ))
     fig.update_layout(
         title="Turn Duration Distribution",
@@ -128,16 +130,18 @@ def build_response_time_histogram(stats: ConversationStats) -> go.Figure:
         name=stats.speaker_a.label,
         marker_color=COLOR_A,
         opacity=0.7,
+        xbins=dict(size=0.25),
     ))
     fig.add_trace(go.Histogram(
         x=stats.speaker_b.response_times,
         name=stats.speaker_b.label,
         marker_color=COLOR_B,
         opacity=0.7,
+        xbins=dict(size=0.25),
     ))
     fig.update_layout(
         title="Turn-Taking Latency (Response Time)",
-        xaxis_title="Latency (seconds) — negative = overlap",
+        xaxis_title="Latency (seconds)",
         yaxis_title="Count",
         barmode="overlay",
         height=400,
@@ -154,6 +158,7 @@ def build_yielding_latency_histogram(stats: ConversationStats) -> go.Figure:
             name=f"{stats.speaker_a.label} (when interrupted)",
             marker_color=COLOR_A,
             opacity=0.7,
+            xbins=dict(size=0.25),
         ))
     if stats.speaker_b.yielding_latencies:
         fig.add_trace(go.Histogram(
@@ -161,6 +166,7 @@ def build_yielding_latency_histogram(stats: ConversationStats) -> go.Figure:
             name=f"{stats.speaker_b.label} (when interrupted)",
             marker_color=COLOR_B,
             opacity=0.7,
+            xbins=dict(size=0.25),
         ))
     fig.update_layout(
         title="Interruption Yielding Latency",

@@ -123,7 +123,7 @@ class TestComputeStats:
         stats = compute_stats(segs_a, segs_b, duration, "A", "B")
         assert abs(stats.total_overlap_sec - 1.0) < 1e-9
 
-    def test_response_times(self):
+    def test_response_times_clean_transition(self):
         # A speaks 0-2, then B speaks 4-6 (2s gap = B's response time)
         segs_a = [SpeechSegment(0.0, 2.0)]
         segs_b = [SpeechSegment(4.0, 6.0)]
@@ -132,6 +132,16 @@ class TestComputeStats:
         stats = compute_stats(segs_a, segs_b, duration, "A", "B")
         assert len(stats.speaker_b.response_times) == 1
         assert abs(stats.speaker_b.response_times[0] - 2.0) < 1e-9
+
+    def test_response_times_excludes_interruptions(self):
+        # A speaks 0-4, B interrupts at 3 (overlap) — no response time recorded
+        segs_a = [SpeechSegment(0.0, 4.0)]
+        segs_b = [SpeechSegment(3.0, 6.0)]
+        duration = 6.0
+
+        stats = compute_stats(segs_a, segs_b, duration, "A", "B")
+        assert len(stats.speaker_b.response_times) == 0
+        assert len(stats.speaker_a.response_times) == 0
 
     def test_turn_properties(self):
         t = Turn(speaker="A", start=1.0, end=3.5)

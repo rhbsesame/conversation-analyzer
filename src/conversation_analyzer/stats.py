@@ -215,13 +215,20 @@ def _compute_response_times(
     label_a: str,
     label_b: str,
 ) -> None:
-    """Compute turn-taking latency for each speaker transition."""
+    """Compute turn-taking latency for clean (non-interruption) speaker transitions.
+
+    Only counts transitions where the new speaker starts after the previous
+    speaker finishes (positive gap). Overlapping transitions are interruptions
+    and tracked separately.
+    """
     for i in range(1, len(turns)):
         prev = turns[i - 1]
         curr = turns[i]
         if prev.speaker == curr.speaker:
             continue
-        gap = curr.start - prev.end  # negative = overlap
+        gap = curr.start - prev.end
+        if gap < 0:
+            continue  # overlap = interruption, tracked separately
         if curr.speaker == label_a:
             speaker_a.response_times.append(gap)
         else:
