@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conversation-analyzer"
+version = "0.1.0"
+description = "Analyze stereo WAV recordings of two-person conversations for turn-taking, silence, and interruption statistics"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "plotly>=5.15",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+conversation-analyzer = "conversation_analyzer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
