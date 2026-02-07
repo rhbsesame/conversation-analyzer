@@ -213,6 +213,7 @@ def _build_yielding_latency_table(stats: ConversationStats) -> str:
         mm, ss = divmod(intr.start_time, 60)
         rows.append(
             f"<tr><td>{int(mm)}:{ss:05.2f}</td>"
+            f"<td>{intr.speech_before:.1f}s</td>"
             f"<td>{intr.yielding_latency:.3f}s</td></tr>"
         )
     if not rows:
@@ -220,6 +221,6 @@ def _build_yielding_latency_table(stats: ConversationStats) -> str:
     return (
         f'<details><summary>View all {sb_label} yields ({len(rows)})</summary>'
         f'<div class="data-table"><table>'
-        f"<thead><tr><th>At</th><th>Yielding Latency</th></tr></thead>"
+        f"<thead><tr><th>At</th><th>Speaking Before</th><th>Yielding Latency</th></tr></thead>"
         f'<tbody>{"".join(rows)}</tbody></table></div></details>'
     )
