@@ -208,7 +208,8 @@ def _build_yielding_latency_table(stats: ConversationStats) -> str:
     sb_label = stats.speaker_b.label
     rows = []
     for intr in stats.interruptions:
-        if intr.interrupter != sa_label or intr.speech_before < 4.0:
+        if (intr.interrupter != sa_label or intr.speech_before < 4.0
+                or intr.interrupter_duration < 3.0):
             continue
         mm, ss = divmod(intr.start_time, 60)
         rows.append(

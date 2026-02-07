@@ -29,6 +29,7 @@ class Interruption:
     start_time: float
     yielding_latency: float  # time until interrupted speaker stops
     speech_before: float  # how long the interrupted speaker had been talking
+    interrupter_duration: float  # how long the interrupter speaks
 
 
 @dataclass
@@ -256,6 +257,7 @@ def _detect_interruptions(
                     start_time=seg_b.start_sec,
                     yielding_latency=yielding_latency,
                     speech_before=seg_b.start_sec - seg_a.start_sec,
+                    interrupter_duration=seg_b.duration_sec,
                 ))
                 break  # only count one interruption per B segment
 
@@ -270,6 +272,7 @@ def _detect_interruptions(
                     start_time=seg_a.start_sec,
                     yielding_latency=yielding_latency,
                     speech_before=seg_a.start_sec - seg_b.start_sec,
+                    interrupter_duration=seg_a.duration_sec,
                 ))
                 break
 
