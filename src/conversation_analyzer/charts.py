@@ -171,29 +171,31 @@ def build_response_time_histogram(stats: ConversationStats) -> go.Figure:
 
 
 def build_yielding_latency_histogram(stats: ConversationStats) -> go.Figure:
-    """Distribution of interruption yielding times, per speaker."""
+    """Distribution of yielding times when speaker B is interrupted by speaker A.
+
+    Only includes interruptions where B had been speaking for >= 4 seconds.
+    """
+    sa_label = stats.speaker_a.label
+    sb_label = stats.speaker_b.label
+    latencies = [
+        intr.yielding_latency
+        for intr in stats.interruptions
+        if intr.interrupter == sa_label and intr.speech_before >= 4.0
+    ]
+
     fig = go.Figure()
-    if stats.speaker_a.yielding_latencies:
+    if latencies:
         fig.add_trace(go.Histogram(
-            x=stats.speaker_a.yielding_latencies,
-            name=f"{stats.speaker_a.label} (when interrupted)",
-            marker_color=COLOR_A,
-            opacity=0.7,
-            xbins=dict(size=0.25),
-        ))
-    if stats.speaker_b.yielding_latencies:
-        fig.add_trace(go.Histogram(
-            x=stats.speaker_b.yielding_latencies,
-            name=f"{stats.speaker_b.label} (when interrupted)",
+            x=latencies,
+            name=f"{sb_label} yielding",
             marker_color=COLOR_B,
             opacity=0.7,
             xbins=dict(size=0.25),
         ))
     fig.update_layout(
-        title="Interruption Yielding Latency",
+        title=f"{sb_label} Yielding Latency (when {sa_label} interrupts)",
         xaxis_title="Yielding Latency (seconds)",
         yaxis_title="Count",
-        barmode="overlay",
         height=400,
     )
     return fig

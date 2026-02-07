@@ -200,21 +200,26 @@ def _build_response_time_table(stats: ConversationStats) -> str:
 
 
 def _build_yielding_latency_table(stats: ConversationStats) -> str:
-    """Expandable table of all interruption yielding latencies."""
-    if not stats.interruptions:
-        return ""
+    """Expandable table of yielding latencies when speaker A interrupts speaker B.
+
+    Only includes interruptions where B had been speaking for >= 4 seconds.
+    """
+    sa_label = stats.speaker_a.label
+    sb_label = stats.speaker_b.label
     rows = []
     for intr in stats.interruptions:
+        if intr.interrupter != sa_label or intr.speech_before < 4.0:
+            continue
         mm, ss = divmod(intr.start_time, 60)
         rows.append(
             f"<tr><td>{int(mm)}:{ss:05.2f}</td>"
-            f"<td>{intr.interrupter}</td>"
-            f"<td>{intr.interrupted}</td>"
             f"<td>{intr.yielding_latency:.3f}s</td></tr>"
         )
+    if not rows:
+        return ""
     return (
-        f'<details><summary>View all interruptions ({len(rows)})</summary>'
+        f'<details><summary>View all {sb_label} yields ({len(rows)})</summary>'
         f'<div class="data-table"><table>'
-        f"<thead><tr><th>At</th><th>Interrupter</th><th>Interrupted</th><th>Yielding Latency</th></tr></thead>"
+        f"<thead><tr><th>At</th><th>Yielding Latency</th></tr></thead>"
         f'<tbody>{"".join(rows)}</tbody></table></div></details>'
     )
