@@ -15,3 +15,4 @@ venv/
 *.wav
 *.html
 !templates/*.html
+.DS_Store
