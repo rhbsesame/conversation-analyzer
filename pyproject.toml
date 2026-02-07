@@ -12,6 +12,8 @@ dependencies = [
     "scipy>=1.10",
     "plotly>=5.15",
     "click>=8.1",
+    "torch>=2.0",
+    "silero-vad>=5.0",
 ]
 
 [project.optional-dependencies]

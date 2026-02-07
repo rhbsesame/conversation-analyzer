@@ -123,18 +123,39 @@ def build_cumulative_talk_time(stats: ConversationStats) -> go.Figure:
 
 
 def build_response_time_histogram(stats: ConversationStats) -> go.Figure:
-    """Distribution of turn-taking latencies, per speaker."""
+    """Distribution of turn-taking latencies, by direction.
+
+    Rebuilds data from turns (same logic as the response time table)
+    to guarantee the histogram and table always show identical data.
+    """
+    sa_label = stats.speaker_a.label
+    sb_label = stats.speaker_b.label
+    a_to_b: list[float] = []
+    b_to_a: list[float] = []
+    for i in range(1, len(stats.turns)):
+        prev = stats.turns[i - 1]
+        curr = stats.turns[i]
+        if prev.speaker == curr.speaker:
+            continue
+        gap = curr.start - prev.end
+        if gap <= 0:
+            continue
+        if prev.speaker == sa_label:
+            a_to_b.append(gap)
+        else:
+            b_to_a.append(gap)
+
     fig = go.Figure()
     fig.add_trace(go.Histogram(
-        x=stats.speaker_a.response_times,
-        name=stats.speaker_a.label,
+        x=a_to_b,
+        name=f"{sa_label} \u2192 {sb_label}",
         marker_color=COLOR_A,
         opacity=0.7,
         xbins=dict(size=0.25),
     ))
     fig.add_trace(go.Histogram(
-        x=stats.speaker_b.response_times,
-        name=stats.speaker_b.label,
+        x=b_to_a,
+        name=f"{sb_label} \u2192 {sa_label}",
         marker_color=COLOR_B,
         opacity=0.7,
         xbins=dict(size=0.25),

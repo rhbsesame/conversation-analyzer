@@ -142,10 +142,12 @@ def _build_turn_duration_table(stats: ConversationStats) -> str:
     """Expandable table of all turn durations."""
     rows = []
     for turn in stats.turns:
+        sm, ss = divmod(turn.start, 60)
+        em, es = divmod(turn.end, 60)
         rows.append(
             f"<tr><td>{turn.speaker}</td>"
-            f"<td>{turn.start:.2f}s</td>"
-            f"<td>{turn.end:.2f}s</td>"
+            f"<td>{int(sm)}:{ss:05.2f}</td>"
+            f"<td>{int(em)}:{es:05.2f}</td>"
             f"<td>{turn.duration:.2f}s</td></tr>"
         )
     if not rows:
@@ -159,7 +161,7 @@ def _build_turn_duration_table(stats: ConversationStats) -> str:
 
 
 def _build_response_time_table(stats: ConversationStats) -> str:
-    """Expandable table of all response times."""
+    """Expandable table of all response times with separate A→B and B→A columns."""
     sa = stats.speaker_a
     sb = stats.speaker_b
     # Rebuild per-transition data from turns
@@ -170,7 +172,7 @@ def _build_response_time_table(stats: ConversationStats) -> str:
         if prev.speaker == curr.speaker:
             continue
         gap = curr.start - prev.end
-        if gap < 0:
+        if gap <= 0:
             continue
         entries.append((prev.end, prev.speaker, curr.speaker, gap))
 
@@ -178,16 +180,21 @@ def _build_response_time_table(stats: ConversationStats) -> str:
         return ""
     rows = []
     for time, prev_spk, resp_spk, gap in entries:
+        a_to_b = f"{gap:.3f}s" if prev_spk == sa.label else ""
+        b_to_a = f"{gap:.3f}s" if prev_spk == sb.label else ""
+        mm, ss = divmod(time, 60)
         rows.append(
-            f"<tr><td>{time:.2f}s</td>"
-            f"<td>{prev_spk}</td>"
-            f"<td>{resp_spk}</td>"
-            f"<td>{gap:.3f}s</td></tr>"
+            f"<tr><td>{int(mm)}:{ss:05.2f}</td>"
+            f"<td>{a_to_b}</td>"
+            f"<td>{b_to_a}</td></tr>"
         )
     return (
         f'<details><summary>View all response times ({len(rows)})</summary>'
         f'<div class="data-table"><table>'
-        f"<thead><tr><th>At</th><th>From</th><th>Responder</th><th>Latency</th></tr></thead>"
+        f"<thead><tr><th>At</th>"
+        f'<th class="speaker-a">{sa.label} \u2192 {sb.label}</th>'
+        f'<th class="speaker-b">{sb.label} \u2192 {sa.label}</th>'
+        f"</tr></thead>"
         f'<tbody>{"".join(rows)}</tbody></table></div></details>'
     )
 
@@ -198,8 +205,9 @@ def _build_yielding_latency_table(stats: ConversationStats) -> str:
         return ""
     rows = []
     for intr in stats.interruptions:
+        mm, ss = divmod(intr.start_time, 60)
         rows.append(
-            f"<tr><td>{intr.start_time:.2f}s</td>"
+            f"<tr><td>{int(mm)}:{ss:05.2f}</td>"
             f"<td>{intr.interrupter}</td>"
             f"<td>{intr.interrupted}</td>"
             f"<td>{intr.yielding_latency:.3f}s</td></tr>"

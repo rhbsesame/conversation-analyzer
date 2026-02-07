@@ -14,14 +14,10 @@ from .vad import detect_speech
 @click.argument("wav_file", type=click.Path(exists=True, dir_okay=False))
 @click.option("-o", "--output", type=click.Path(), default=None,
               help="Output HTML report path (default: <input>_report.html)")
-@click.option("-t", "--threshold", type=float, default=None,
-              help="RMS energy threshold (default: auto-detect)")
 @click.option("-a", "--speaker-a", default="Human",
               help="Label for left channel")
 @click.option("-b", "--speaker-b", default="Maya",
               help="Label for right channel")
-@click.option("--frame-size", type=int, default=30,
-              help="VAD frame size in ms")
 @click.option("--min-speech", type=int, default=200,
               help="Min speech segment duration in ms")
 @click.option("--min-silence", type=int, default=300,
@@ -29,10 +25,8 @@ from .vad import detect_speech
 def main(
     wav_file: str,
     output: str | None,
-    threshold: float | None,
     speaker_a: str,
     speaker_b: str,
-    frame_size: int,
     min_speech: int,
     min_silence: int,
 ) -> None:
@@ -52,12 +46,10 @@ def main(
     click.echo("Running voice activity detection...")
     segments_a = detect_speech(
         left, sample_rate,
-        frame_ms=frame_size, threshold=threshold,
         min_speech_ms=min_speech, min_silence_ms=min_silence,
     )
     segments_b = detect_speech(
         right, sample_rate,
-        frame_ms=frame_size, threshold=threshold,
         min_speech_ms=min_speech, min_silence_ms=min_silence,
     )
 

@@ -227,8 +227,8 @@ def _compute_response_times(
         if prev.speaker == curr.speaker:
             continue
         gap = curr.start - prev.end
-        if gap < 0:
-            continue  # overlap = interruption, tracked separately
+        if gap <= 0:
+            continue  # overlap/zero-gap = interruption or boundary artifact
         if curr.speaker == label_a:
             speaker_a.response_times.append(gap)
         else:

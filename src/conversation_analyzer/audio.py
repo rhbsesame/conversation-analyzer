@@ -1,9 +1,11 @@
-"""WAV loading, channel splitting, and normalization."""
+"""WAV loading, channel splitting, normalization, and resampling."""
 
+from math import gcd
 from pathlib import Path
 
 import numpy as np
 from scipy.io import wavfile
+from scipy.signal import resample_poly
 
 
 def load_wav(path: str | Path) -> tuple[int, np.ndarray, np.ndarray]:
@@ -42,3 +44,14 @@ def load_wav(path: str | Path) -> tuple[int, np.ndarray, np.ndarray]:
     left = data[:, 0]
     right = data[:, 1]
     return sample_rate, left, right
+
+
+def resample(signal: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
+    """Resample a 1-D signal from orig_sr to target_sr.
+
+    Returns the signal unchanged if sample rates already match.
+    """
+    if orig_sr == target_sr:
+        return signal
+    g = gcd(orig_sr, target_sr)
+    return resample_poly(signal, target_sr // g, orig_sr // g).astype(signal.dtype)
