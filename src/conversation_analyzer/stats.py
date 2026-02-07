@@ -30,6 +30,7 @@ class Interruption:
     yielding_latency: float  # time until interrupted speaker stops
     speech_before: float  # how long the interrupted speaker had been talking
     interrupter_duration: float  # how long the interrupter speaks
+    yielded: bool  # True if the interrupted speaker actually stopped (no resume within 2s)
 
 
 @dataclass
@@ -237,6 +238,20 @@ def _compute_response_times(
             speaker_b.response_times.append(gap)
 
 
+def _resumes_within(
+    segments: list[SpeechSegment],
+    current_seg: SpeechSegment,
+    window_sec: float = 2.0,
+) -> bool:
+    """Check if a speaker has another segment starting within window_sec after current_seg ends."""
+    for seg in segments:
+        if seg is current_seg:
+            continue
+        if seg.start_sec > current_seg.end_sec and seg.start_sec - current_seg.end_sec <= window_sec:
+            return True
+    return False
+
+
 def _detect_interruptions(
     segments_a: list[SpeechSegment],
     segments_b: list[SpeechSegment],
@@ -258,6 +273,7 @@ def _detect_interruptions(
                     yielding_latency=yielding_latency,
                     speech_before=seg_b.start_sec - seg_a.start_sec,
                     interrupter_duration=seg_b.duration_sec,
+                    yielded=not _resumes_within(segments_a, seg_a),
                 ))
                 break  # only count one interruption per B segment
 
@@ -273,6 +289,7 @@ def _detect_interruptions(
                     yielding_latency=yielding_latency,
                     speech_before=seg_a.start_sec - seg_b.start_sec,
                     interrupter_duration=seg_a.duration_sec,
+                    yielded=not _resumes_within(segments_b, seg_b),
                 ))
                 break
 

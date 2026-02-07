@@ -181,7 +181,7 @@ def build_yielding_latency_histogram(stats: ConversationStats) -> go.Figure:
         intr.yielding_latency
         for intr in stats.interruptions
         if intr.interrupter == sa_label and intr.speech_before >= 4.0
-        and intr.interrupter_duration >= 2.0
+        and intr.interrupter_duration >= 2.0 and intr.yielded
     ]
 
     fig = go.Figure()
