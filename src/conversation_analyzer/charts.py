@@ -191,7 +191,7 @@ def build_yielding_latency_histogram(stats: ConversationStats) -> go.Figure:
             name=f"{sb_label} yielding",
             marker_color=COLOR_B,
             opacity=0.7,
-            xbins=dict(size=0.25),
+            xbins=dict(size=0.1),
         ))
     fig.update_layout(
         title=f"{sb_label} Yielding Latency (when {sa_label} interrupts)",
